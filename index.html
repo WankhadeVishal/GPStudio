@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPStudio - Instant Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #fbbf24; border-radius: 3px; }
+        
+        /* Animations */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+        
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        
+        .category-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        
+        .product-card { transition: all 0.2s ease; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        
+        .add-btn { transition: all 0.2s; }
+        .add-btn:active { transform: scale(0.95); }
+        
+        .pulse-ring::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #fbbf24;
+            animation: pulse-ring 2s infinite;
+            z-index: -1;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .cart-badge {
+            animation: bounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-effect border-b border-gray-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                <!-- Logo -->
+                <div class="flex items-center gap-2 flex-shrink-0 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        GP
+                    </div>
+                    <div class="hidden sm:block">
+                        <h1 class="text-xl font-bold text-gray-900 leading-tight">GPStudio</h1>
+                        <p class="text-xs text-gray-500 font-medium">Instant Delivery</p>
+                    </div>
+                </div>
+
+                <!-- Location Selector -->
+                <div class="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full hover:bg-gray-200 cursor-pointer transition-colors">
+                    <i class="fas fa-map-marker-alt text-yellow-600"></i>
+                    <span class="text-sm font-medium text-gray-700">Deliver to:</span>
+                    <span class="text-sm font-bold text-gray-900 truncate max-w-[150px]">Select Location</span>
+                    <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-2xl relative">
+                    <input type="text" id="searchInput" placeholder="Search for products..." 
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-2 border-transparent rounded-xl focus:bg-white focus:border-yellow-400 focus:outline-none transition-all text-sm">
+                    <i class="fas fa-search absolute left-3.5 top-3 text-gray-400"></i>
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-3">
+                    <button class="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
+                        <i class="fas fa-user"></i>
+                        <span>Login</span>
+                    </button>
+                    
+                    <button onclick="toggleCart()" class="relative p-2 hover:bg-gray-100 rounded-xl transition-colors group">
+                        <i class="fas fa-shopping-cart text-xl text-gray-700 group-hover:text-yellow-600 transition-colors"></i>
+                        <span id="cartCount" class="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-white text-xs font-bold rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Delivery Time Banner -->
+        <div class="mt-4 mb-6 flex items-center justify-between bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl p-4 text-white shadow-lg animate-fade-in">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-bolt text-2xl"></i>
+                    </div>
+                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-yellow-400"></div>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold">Delivery in 10 minutes</h2>
+                    <p class="text-sm opacity-90">Fresh groceries delivered to your doorstep</p>
+                </div>
+            </div>
+            <div class="hidden sm:block text-right">
+                <p class="text-xs font-medium opacity-90">Currently delivering in</p>
+                <p class="text-lg font-bold">12 Locations</p>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Categories</h3>
+                <button class="text-sm font-semibold text-yellow-600 hover:text-yellow-700">See All</button>
+            </div>
+            <div class="category-scroll flex gap-4 overflow-x-auto pb-4" id="categoryContainer">
+                <!-- Categories injected via JS -->
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Popular Products</h3>
+                <div class="flex gap-2">
+                    <button onclick="filterProducts('all')" class="px-4 py-1.5 text-sm font-medium rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors">All</button>
+                    <button onclick="filterProducts('veg')" class="px-4 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">Veg</button>
+                    <button onclick="filterProducts('nonveg')" class="px-4 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">Non-Veg</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="productGrid">
+                <!-- Products injected via JS -->
+            </div>
+        </div>
+
+        <!-- Promo Section -->
+        <div class="grid md:grid-cols-2 gap-4 mb-8">
+            <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer hover:shadow-xl transition-shadow">
+                <div class="relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold mb-2">NEW ARRIVAL</span>
+                    <h3 class="text-2xl font-bold mb-1">Fresh Vegetables</h3>
+                    <p class="text-sm opacity-90 mb-4">Farm fresh veggies delivered daily</p>
+                    <button class="px-4 py-2 bg-white text-green-600 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors">Shop Now</button>
+                </div>
+                <div class="absolute right-0 bottom-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mb-10 group-hover:scale-110 transition-transform"></div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 text-white relative overflow-hidden group cursor-pointer hover:shadow-xl transition-shadow">
+                <div class="relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold mb-2">50% OFF</span>
+                    <h3 class="text-2xl font-bold mb-1">Daily Essentials</h3>
+                    <p class="text-sm opacity-90 mb-4">Best deals on household items</p>
+                    <button class="px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors">View Deals</button>
+                </div>
+                <div class="absolute right-0 bottom-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mb-10 group-hover:scale-110 transition-transform"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div id="cartSidebar" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform translate-x-full" id="cartPanel">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-900">Your Cart</h2>
+                    <button onclick="toggleCart()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-times text-gray-500"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-6" id="cartItems">
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <i class="fas fa-shopping-basket text-6xl mb-4 text-gray-200"></i>
+                        <p class="text-lg font-medium">Your cart is empty</p>
+                        <p class="text-sm">Add items to get started</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 p-6 bg-gray-50">
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="font-semibold" id="subtotal">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Delivery Fee</span>
+                            <span class="font-semibold text-green-600">Free</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+                            <span>Total</span>
+                            <span id="total">₹0</span>
+                        </div>
+                    </div>
+                    <button onclick="checkout()" class="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-yellow-500/30">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 opacity-0 pointer-events-none transition-all z-50">
+        <i class="fas fa-check-circle text-green-400"></i>
+        <span id="toastMessage" class="font-medium">Added to cart</span>
+    </div>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 md:hidden z-40">
+        <div class="flex justify-around items-center h-16">
+            <button class="flex flex-col items-center gap-1 text-yellow-600">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-xs font-medium">Home</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-th-large text-xl"></i>
+                <span class="text-xs font-medium">Categories</span>
+            </button>
+            <button onclick="toggleCart()" class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 relative">
+                <i class="fas fa-shopping-cart text-xl"></i>
+                <span class="text-xs font-medium">Cart</span>
+                <span id="mobileCartCount" class="absolute -top-1 right-2 w-4 h-4 bg-yellow-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center opacity-0">0</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-user text-xl"></i>
+                <span class="text-xs font-medium">Profile</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Data
+        const categories = [
+            { id: 1, name: 'Vegetables', icon: '🥬', color: 'bg-green-100 text-green-600' },
+            { id: 2, name: 'Fruits', icon: '🍎', color: 'bg-red-100 text-red-600' },
+            { id: 3, name: 'Dairy', icon: '🥛', color: 'bg-blue-100 text-blue-600' },
+            { id: 4, name: 'Snacks', icon: '🍿', color: 'bg-yellow-100 text-yellow-600' },
+            { id: 5, name: 'Beverages', icon: '🥤', color: 'bg-purple-100 text-purple-600' },
+            { id: 6, name: 'Household', icon: '🏠', color: 'bg-gray-100 text-gray-600' },
+            { id: 7, name: 'Personal Care', icon: '🧴', color: 'bg-pink-100 text-pink-600' },
+            { id: 8, name: 'Breakfast', icon: '🥐', color: 'bg-orange-100 text-orange-600' }
+        ];
+
+        const products = [
+            { id: 1, name: 'Fresh Tomatoes', price: 40, unit: '500g', image: '🍅', category: 'veg', discount: 10 },
+            { id: 2, name: 'Organic Milk', price: 60, unit: '1L', image: '🥛', category: 'veg', discount: 0 },
+            { id: 3, name: 'Banana Bunch', price: 45, unit: '6 pcs', image: '🍌', category: 'veg', discount: 15 },
+            { id: 4, name: 'Chicken Breast', price: 250, unit: '500g', image: '🍗', category: 'nonveg', discount: 20 },
+            { id: 5, name: 'Potato', price: 30, unit: '1kg', image: '🥔', category: 'veg', discount: 0 },
+            { id: 6, name: 'Onion', price: 35, unit: '1kg', image: '🧅', category: 'veg', discount: 5 },
+            { id: 7, name: 'Eggs', price: 80, unit: '12 pcs', image: '🥚', category: 'nonveg', discount: 0 },
+            { id: 8, name: 'Bread', price: 35, unit: '400g', image: '🍞', category: 'veg', discount: 0 },
+            { id: 9, name: 'Butter', price: 50, unit: '100g', image: '🧈', category: 'veg', discount: 0 },
+            { id: 10, name: 'Apple', price: 120, unit: '500g', image: '🍎', category: 'veg', discount: 10 },
+            { id: 11, name: 'Carrot', price: 40, unit: '500g', image: '🥕', category: 'veg', discount: 0 },
+            { id: 12, name: 'Fish', price: 300, unit: '500g', image: '🐟', category: 'nonveg', discount: 25 }
+        ];
+
+        let cart = {};
+        let currentFilter = 'all';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+            renderProducts();
+            
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
+                renderProducts(filtered);
+            });
+        });
+
+        function renderCategories() {
+            const container = document.getElementById('categoryContainer');
+            container.innerHTML = categories.map(cat => `
+                <div class="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group" onclick="filterByCategory('${cat.name}')">
+                    <div class="w-16 h-16 ${cat.color} rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform">
+                        ${cat.icon}
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700 text-center whitespace-nowrap">${cat.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderProducts(productList = products) {
+            const container = document.getElementById('productGrid');
+            
+            let filtered = productList;
+            if (currentFilter !== 'all') {
+                filtered = productList.filter(p => p.category === currentFilter);
+            }
+
+            container.innerHTML = filtered.map((product, index) => {
+                const quantity = cart[product.id] || 0;
+                const discountBadge = product.discount > 0 ? 
+                    `<span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg">-${product.discount}%</span>` : '';
+                
+                return `
+                <div class="product-card bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative animate-fade-in" style="animation-delay: ${index * 0.05}s">
+                    ${discountBadge}
+                    <div class="aspect-square bg-gray-50 rounded-xl flex items-center justify-center text-6xl mb-3 relative overflow-hidden group">
+                        ${product.image}
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <div class="flex items-start justify-between">
+                            <h4 class="font-bold text-gray-900 text-sm leading-tight line-clamp-2">${product.name}</h4>
+                        </div>
+                        <p class="text-xs text-gray-500">${product.unit}</p>
+                        
+                        <div class="flex items-center justify-between pt-2">
+                            <div>
+                                <span class="text-lg font-bold text-gray-900">₹${product.price}</span>
+                                ${product.discount > 0 ? `<span class="text-xs text-gray-400 line-through ml-1">₹${Math.round(product.price * 100 / (100 - product.discount))}</span>` : ''}
+                            </div>
+                            
+                            ${quantity === 0 ? `
+                                <button onclick="addToCart(${product.id})" class="add-btn w-8 h-8 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg flex items-center justify-center shadow-md shadow-yellow-400/30">
+                                    <i class="fas fa-plus text-sm"></i>
+                                </button>
+                            ` : `
+                                <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                                    <button onclick="updateQuantity(${product.id}, -1)" class="w-6 h-6 bg-white rounded-md flex items-center justify-center text-gray-600 hover:text-red-500 shadow-sm">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="text-sm font-bold w-4 text-center">${quantity}</span>
+                                    <button onclick="updateQuantity(${product.id}, 1)" class="w-6 h-6 bg-white rounded-md flex items-center justify-center text-gray-600 hover:text-green-500 shadow-sm">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function filterProducts(type) {
+            currentFilter = type;
+            renderProducts();
+            
+            // Update button styles
+            const buttons = document.querySelectorAll('button[onclick^="filterProducts"]');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(type)) {
+                    btn.className = "px-4 py-1.5 text-sm font-medium rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors";
+                } else {
+                    btn.className = "px-4 py-1.5 text-sm font-medium rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors";
+                }
+            });
+        }
+
+        function filterByCategory(categoryName) {
+            showToast(`Showing ${categoryName}`);
+            // In a real app, this would filter products by category
+        }
+
+        function addToCart(productId) {
+            cart[productId] = 1;
+            updateCartUI();
+            renderProducts();
+            showToast('Added to cart');
+            
+            // Animate cart icon
+            const badge = document.getElementById('cartCount');
+            badge.classList.remove('cart-badge');
+            void badge.offsetWidth; // Trigger reflow
+            badge.classList.add('cart-badge');
+        }
+
+        function updateQuantity(productId, change) {
+            if (!cart[productId]) return;
+            
+            cart[productId] += change;
+            if (cart[productId] <= 0) {
+                delete cart[productId];
+            }
+            
+            updateCartUI();
+            renderProducts();
+            updateCartPanel();
+        }
+
+        function updateCartUI() {
+            const count = Object.values(cart).reduce((a, b) => a + b, 0);
+            const badges = [document.getElementById('cartCount'), document.getElementById('mobileCartCount')];
+            
+            badges.forEach(badge => {
+                badge.textContent = count;
+                badge.style.opacity = count > 0 ? '1' : '0';
+            });
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cartSidebar');
+            const panel = document.getElementById('cartPanel');
+            
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                updateCartPanel();
+                setTimeout(() => {
+                    panel.classList.remove('translate-x-full');
+                }, 10);
+            } else {
+                panel.classList.add('translate-x-full');
+                setTimeout(() => {
+                    sidebar.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function updateCartPanel() {
+            const container = document.getElementById('cartItems');
+            const items = Object.keys(cart);
+            
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <i class="fas fa-shopping-basket text-6xl mb-4 text-gray-200"></i>
+                        <p class="text-lg font-medium">Your cart is empty</p>
+                        <p class="text-sm">Add items to get started</p>
+                    </div>
+                `;
+            } else {
+                let total = 0;
+                container.innerHTML = items.map(id => {
+                    const product = products.find(p => p.id === parseInt(id));
+                    const qty = cart[id];
+                    const itemTotal = product.price * qty;
+                    total += itemTotal;
+                    
+                    return `
+                        <div class="flex gap-4 mb-4 bg-gray-50 p-3 rounded-xl animate-slide-in">
+                            <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-3xl shadow-sm">
+                                ${product.image}
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900 text-sm">${product.name}</h4>
+                                <p class="text-xs text-gray-500 mb-2">${product.unit}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-gray-900">₹${itemTotal}</span>
+                                    <div class="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm">
+                                        <button onclick="updateQuantity(${product.id}, -1)" class="w-6 h-6 hover:bg-gray-100 rounded flex items-center justify-center text-gray-600">
+                                            <i class="fas fa-minus text-xs"></i>
+                                        </button>
+                                        <span class="text-sm font-bold w-4 text-center">${qty}</span>
+                                        <button onclick="updateQuantity(${product.id}, 1)" class="w-6 h-6 hover:bg-gray-100 rounded flex items-center justify-center text-gray-600">
+                                            <i class="fas fa-plus text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('subtotal').textContent = `₹${total}`;
+                document.getElementById('total').textContent = `₹${total}`;
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 2000);
+        }
+
+        function checkout() {
+            if (Object.keys(cart).length === 0) {
+                showToast('Cart is empty!');
+                return;
+            }
+            showToast('Proceeding to checkout...');
+            // In a real app, this would redirect to checkout page
+        }
+    </script>
+</body>
+</html>
